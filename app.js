@@ -26,6 +26,16 @@ const store = new mongoDbSession({
     collection: 'mysession'
 })
 
+const isAuth = (req, res, next) => {
+    if(req.session.isAuth == false) {
+        return res.send({
+            status: 400,
+            message: 'Invalid Session, Please Login'
+        })
+    }
+    next();
+}
+
 //client Session
 app.use(expressSession({
     secret: 'new session',
@@ -95,12 +105,25 @@ app.post('/login', async (req, res) => {
 
 })
 
-app.get('/home', (req, res) => {
+app.get('/home', isAuth, (req, res) => {
     console.log(req.session);
-    if(req.session.isAuth) {
-        return res.send('home page')
-    }
-    res.send('please login')
+    return res.send(`
+        <html>
+            <body> 
+                <h3> This is home Page </h3>
+                <form action = "/logout" method = "POST">
+                    <button> Log out </button> 
+                </form>
+            </body>
+        </html>
+    `)
+})
+
+app.post('/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if(err) throw err;
+        res.redirect('/')
+    })
 })
 
 app.get('/register', (req, res) => {
